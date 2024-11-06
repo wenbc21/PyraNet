@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 import os
 import argparse
 
@@ -17,6 +16,7 @@ def get_args_parser():
     parser.add_argument('-expID', default = 'default', help = 'Experiment ID')
     parser.add_argument('-device', type = int, default = 2, help = 'GPU id')
     parser.add_argument('-test', action = 'store_true', help = 'test')
+    parser.add_argument('--num_workers', type=int, default=4)
     
     parser.add_argument('-demo', default = '', help = 'path/to/demo/image')
     parser.add_argument('-loadModel', default = 'none', help = 'Provide full path to a previously trained model')
@@ -27,24 +27,49 @@ def get_args_parser():
     
     parser.add_argument('-LR', type = float, default = 2.5e-4, help = 'Learning Rate')
     parser.add_argument('-dropLR', type = int, default = 1000000, help = 'drop LR')
+    parser.add_argument('-momentum', type = float, default = 0.0, help = 'momentum')
+    parser.add_argument('-weightDecay', type = float, default = 0.0, help = 'weightDecay')
+    parser.add_argument('-alpha', type = float, default = 0.99, help = 'alpha')
+    parser.add_argument('-epsilon', type = float, default = 1e-8, help = 'epsilon')
     parser.add_argument('-nEpochs', type = int, default = 100, help = '#training epochs')
     parser.add_argument('-valIntervals', type = int, default = 2, help = '#valid intervel')
     parser.add_argument('-trainBatch', type = int, default = 12, help = 'Mini-batch size')
     parser.add_argument('-arch', default = 'hg', help = 'hg | hg-reg | resnet-xxx')
+    
+    parser.add_argument('-dataDir', type = str, default = './data', help = 'data path')
+    parser.add_argument('-expDir', type = str, default = './exp', help = 'exp path')
 
     return parser
 
 
 def main(args):
     
-    if 'hg' in args.arch:
-        model = PyramidHourglassNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
-        optimizer = torch.optim.RMSprop(
-            model.parameters(), lr=args.LR, alpha = ref.alpha,
-            eps = ref.epsilon,
-            weight_decay = ref.weightDecay,
-            momentum = ref.momentum
-        )
+    train_dataset = MPII(args, 'val')
+    val_dataset = MPII(args, 'val')
+    
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, 
+        batch_size = args.trainBatch, 
+        shuffle = True,
+        num_workers = args.num_workers
+    )
+    
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset, 
+        batch_size = 1, 
+        shuffle = False,
+        num_workers = args.num_workers
+    )
+    
+    model = PyramidHourglassNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
+    optimizer = torch.optim.RMSprop(
+        model.parameters(), 
+        lr=args.LR, 
+        alpha = args.alpha,
+        eps = args.epsilon,
+        weight_decay = args.weightDecay,
+        momentum = args.momentum
+    )
 
     if args.loadModel != 'none':
         checkpoint = torch.load(args.loadModel)
@@ -56,23 +81,6 @@ def main(args):
     
     model = model.cuda()
     criterion = torch.nn.MSELoss().cuda()
-    
-    train_dataset = MPII(args, 'train')
-    val_dataset = MPII(args, 'val')
-    
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, 
-        batch_size = args.trainBatch, 
-        shuffle = True,
-        num_workers = int(ref.nThreads)
-    )
-    
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset, 
-        batch_size = 1, 
-        shuffle = False,
-        num_workers = int(ref.nThreads)
-    )
 
     for epoch in range(1, args.nEpochs + 1):
         log_dict_train, _ = train(epoch, args, train_loader, model, criterion, optimizer)
@@ -86,7 +94,7 @@ def main(args):
             lr = args.LR * (0.1 ** (epoch // args.dropLR))
             print('Drop LR to {}'.format(lr))
             adjust_learning_rate(optimizer, lr)
-
+            
     torch.save(model.cpu(), os.path.join(args.saveDir, 'model_cpu.pth'))
 
 
@@ -96,7 +104,7 @@ if __name__ == '__main__':
 
     if args.test:
         args.expID = args.expID + 'TEST'
-    args.saveDir = os.path.join(ref.expDir, args.expID)
+    args.saveDir = os.path.join(args.expDir, args.expID)
 
     if not os.path.exists(args.saveDir):
         os.makedirs(args.saveDir)

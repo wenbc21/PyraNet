@@ -12,7 +12,7 @@ class MPII(data.Dataset):
         print('==> initializing 2D {} data.'.format(split))
         annot = {}
         tags = ['part','center','scale']
-        f = File('{}/mpii/annot/{}.h5'.format(ref.dataDir, split), 'r')
+        f = File('{}/mpii/annot/{}.h5'.format(opt.dataDir, split), 'r')
         data = f['imgname']
         data = [d.decode('utf-8') for d in data]
         annot['imgname'] = np.asarray(data).copy()
@@ -27,7 +27,7 @@ class MPII(data.Dataset):
         self.annot = annot
     
     def LoadImage(self, index):
-        path = '{}/{}'.format(ref.mpiiImgDir, self.annot['imgname'][index])
+        path = '{}/images/{}'.format(self.opt.dataDir, self.annot['imgname'][index])
         img = cv2.imread(path)
         return img
     

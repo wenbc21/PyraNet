@@ -1,8 +1,8 @@
-# -*- coding:utf-8 -*-
 import torch
 import numpy as np
 from utils.utils import AverageMeter, Flip, ShuffleLR
 from utils.eval import Accuracy, getPreds, finalPreds
+import cv2
 import ref as ref
 import sys
 from tqdm import tqdm

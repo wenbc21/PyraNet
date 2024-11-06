@@ -9,23 +9,9 @@ edges = [[0, 1], [1, 2], [2, 6], [6, 3], [3, 4], [4, 5],
 outputRes = 64
 inputRes = 256
 
-eps = 1e-6
-
-momentum = 0.0
-weightDecay = 0.0
-alpha = 0.99
-epsilon = 1e-8
-
 scale = 0.25
 rotate = 30
 hmGauss = 1
 # hmGaussInp = 20
 # shiftPX = 50
 # disturb = 10
-
-rootDir = '/mnt/slurm_home/bcwen/pyranet/'
-dataDir = rootDir + 'data'
-expDir = rootDir + 'exp'
-mpiiImgDir = '/mnt/slurm_home/bcwen/pyranet/data/images/'
-
-nThreads = 2

@@ -1,7 +1,6 @@
-# -*- coding:utf-8 -*-
 import torch.nn as nn
-import math
 import torch.nn.functional as F
+import math
 
 
 class Concat(nn.Module):
