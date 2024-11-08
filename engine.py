@@ -45,7 +45,7 @@ def step(split, epoch, opt, dataLoader, model, criterion, optimizer = None):
         dataLoader.desc = '{split} Epoch: [{0}][{1}/{2}] | Loss {loss.avg:.4f} | Acc {Acc.avg:.4f} ({Acc.val:.4f})'.format(
             epoch, i, nIters, loss=Loss, Acc=Acc, split = split)
 
-    return {'Loss': Loss.avg, 'Acc': Acc.avg}, preds
+    return Loss.avg, Acc.avg, preds
 
 
 def train(epoch, opt, train_loader, model, criterion, optimizer):
