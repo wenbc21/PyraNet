@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 import cv2
-import ref
 
 def GetTransform(center, scale, rot, res):
     h = scale

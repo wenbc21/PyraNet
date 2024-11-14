@@ -12,6 +12,3 @@ inputRes = 256
 scale = 0.25
 rotate = 30
 hmGauss = 1
-# hmGaussInp = 20
-# shiftPX = 50
-# disturb = 10

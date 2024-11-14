@@ -1,5 +1,5 @@
 from numpy.random import randn
-import ref
+import utils.human_prior as human_prior
 import torch
 import numpy as np
 
@@ -32,6 +32,6 @@ def Flip(img):
   return img[:, :, ::-1].copy()  
   
 def ShuffleLR(x):
-  for e in ref.shuffleRef:
+  for e in human_prior.shuffleRef:
     x[e[0]], x[e[1]] = x[e[1]].copy(), x[e[0]].copy()
   return x

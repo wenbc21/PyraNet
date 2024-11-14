@@ -3,7 +3,7 @@ import numpy as np
 from utils.utils import AverageMeter, Flip, ShuffleLR
 from utils.eval import Accuracy, getPreds, finalPreds
 import cv2
-import ref as ref
+import utils.human_prior as human_prior
 import sys
 from tqdm import tqdm
 
@@ -36,9 +36,9 @@ def step(split, epoch, opt, dataLoader, model, criterion, optimizer = None):
         else:
             input_ = input.cpu().numpy()
             input_[0] = Flip(input_[0]).copy()
-            inputFlip_var = torch.autograd.Variable(torch.from_numpy(input_).view(1, input_.shape[1], ref.inputRes, ref.inputRes)).float().cuda()
+            inputFlip_var = torch.autograd.Variable(torch.from_numpy(input_).view(1, input_.shape[1], human_prior.inputRes, human_prior.inputRes)).float().cuda()
             outputFlip = model(inputFlip_var)
-            outputFlip = ShuffleLR(Flip((outputFlip[opt.nStack - 1].data).cpu().numpy()[0])).reshape(1, ref.nJoints, ref.outputRes, ref.outputRes)
+            outputFlip = ShuffleLR(Flip((outputFlip[opt.nStack - 1].data).cpu().numpy()[0])).reshape(1, human_prior.nJoints, human_prior.outputRes, human_prior.outputRes)
             output_ = ((output[opt.nStack - 1].data).cpu().numpy() + outputFlip) / 2
             preds.append(finalPreds(output_, meta['center'], meta['scale'], meta['rotate'])[0])
 
