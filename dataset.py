@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from h5py import File
 import cv2
+import scipy.io
+import json
 import utils.human_prior as human_prior
 from utils.utils import Rnd, Flip, ShuffleLR
 from utils.img import Crop, DrawGaussian, Transform
@@ -72,15 +74,26 @@ class MPII(data.Dataset):
 class LSP(data.Dataset):
     def __init__(self, opt, split):
         print('==> initializing 2D {} data.'.format(split))
+        with open(f'{opt.dataDir}/lsp/LEEDS_annotations.json', "r") as joints_file:
+            data = json.load(joints_file)
+        
         annot = {}
-        tags = ['part','center','scale']
-        f = File('{}/lsp/joints.mat'.format(opt.dataDir), 'r')
-        data = f['imgname']
-        data = [d.decode('utf-8') for d in data]
-        annot['imgname'] = np.asarray(data).copy()
-        for tag in tags:
-            annot[tag] = np.asarray(f[tag]).copy()
-        f.close()
+        imgname = []
+        part = []
+        center = []
+        scale = []
+        
+        for d in data :
+            if (split == "train" and d['isValidation'] == 0.0) or (split == "val" and d['isValidation'] == 1.0):
+                imgname.append(d['img_paths'])
+                part.append(np.array(d['joint_self'])[:, :2])
+                center.append(d['objpos'])
+                scale.append(d['scale_provided'])
+        
+        annot['imgname'] = np.asarray(imgname).copy()
+        annot['part'] = np.asarray(part).copy()
+        annot['center'] = np.asarray(center).copy()
+        annot['scale'] = np.asarray(scale).copy()
 
         print('Loaded 2D {} {} samples'.format(split, len(annot['scale'])))
         
@@ -89,7 +102,7 @@ class LSP(data.Dataset):
         self.annot = annot
     
     def LoadImage(self, index):
-        path = '{}/mpii/images/{}'.format(self.opt.dataDir, self.annot['imgname'][index])
+        path = '{}/{}'.format(self.opt.dataDir, self.annot['imgname'][index])
         img = cv2.imread(path)
         return img
     
@@ -97,7 +110,7 @@ class LSP(data.Dataset):
         pts = self.annot['part'][index].copy()
         c = self.annot['center'][index].copy()
         s = self.annot['scale'][index]
-        s = s * 200
+        s = s * 200 * (368 / 256)
         return pts, c, s
             
     def __getitem__(self, index):
@@ -129,4 +142,3 @@ class LSP(data.Dataset):
         
     def __len__(self):
         return len(self.annot['scale'])
-
