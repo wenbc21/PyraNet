@@ -26,6 +26,10 @@ You may download the weights from the link to do some inference on our demo imag
 ```
 https://drive.google.com/file/d/17qRIv1Ryx0WJxKyzvF3h_xTlhrFJRG_Q/view?usp=sharing
 ```
+Run
+```
+python inference.py --loadModel exp/mpii/model_200.pth
+```
 
 ## Evaluate
 You may evaluate our predictions from MPII and LSP dataset by running
