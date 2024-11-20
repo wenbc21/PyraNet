@@ -44,10 +44,10 @@ def get_args_parser():
 
 def main(args):
     
-    # train_dataset = MPII(args, 'train')
-    # val_dataset = MPII(args, 'val')
-    train_dataset = LSP(args, 'train')
-    val_dataset = LSP(args, 'val')
+    train_dataset = MPII(args, 'train')
+    val_dataset = MPII(args, 'val')
+    # train_dataset = LSP(args, 'train')
+    # val_dataset = LSP(args, 'val')
     
     train_loader = torch.utils.data.DataLoader(
         train_dataset, 
