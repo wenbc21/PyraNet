@@ -1,5 +1,5 @@
 import numpy as np
-import utils.human_prior as human_prior
+import utils.human_prior as hp
 from .img import Transform
 
 def getPreds(hm):
@@ -34,32 +34,32 @@ def distAccuracy(dist, thr = 0.5):
 def Accuracy(output, target):
     preds = getPreds(output)
     gt = getPreds(target)
-    dists = calcDists(preds, gt, np.ones(preds.shape[0]) * human_prior.outputRes / 10)
-    acc = np.zeros(len(human_prior.accIdxs))
+    dists = calcDists(preds, gt, np.ones(preds.shape[0]) * hp.outputRes / 10)
+    acc = np.zeros(len(hp.accIdxs))
     avgAcc = 0
     badIdxCount = 0
     
-    for i in range(len(human_prior.accIdxs)):
-        acc[i] = distAccuracy(dists[human_prior.accIdxs[i]])
+    for i in range(len(hp.accIdxs)):
+        acc[i] = distAccuracy(dists[hp.accIdxs[i]])
         if acc[i] >= 0:
             avgAcc = avgAcc + acc[i]
         else:
             badIdxCount = badIdxCount + 1
     
-    if badIdxCount == len(human_prior.accIdxs):
+    if badIdxCount == len(hp.accIdxs):
         return 0
     else:
-        return avgAcc / (len(human_prior.accIdxs) - badIdxCount)
+        return avgAcc / (len(hp.accIdxs) - badIdxCount)
 
         
 def finalPreds(output, center, scale, rotate):
     p = getPreds(output).copy()
-    hm = output.reshape(output.shape[0], output.shape[1], human_prior.outputRes, human_prior.outputRes)
+    hm = output.reshape(output.shape[0], output.shape[1], hp.outputRes, hp.outputRes)
     for i in range(hm.shape[0]):
         for j in range(hm.shape[1]):
             pX, pY = int(p[i, j, 0]), int(p[i, j, 1])
             scores = hm[i, j, pX, pY]
-            if pX > 0 and pX < human_prior.outputRes - 1 and pY > 0 and pY < human_prior.outputRes - 1:
+            if pX > 0 and pX < hp.outputRes - 1 and pY > 0 and pY < hp.outputRes - 1:
                 diffY = hm[i, j, pX, pY + 1] - hm[i, j, pX, pY - 1]
                 diffX = hm[i, j, pX + 1, pY] - hm[i, j, pX - 1, pY]
                 p[i, j, 0] = p[i, j, 0] + 0.25 * (1 if diffX >=0 else -1)
@@ -69,7 +69,7 @@ def finalPreds(output, center, scale, rotate):
     preds = np.zeros((p.shape[0], p.shape[1], 2))
     for i in range(p.shape[0]):
         for j in range(p.shape[1]):
-            preds[i, j] = Transform(p[i, j], center[i], scale[i], rotate[i], human_prior.outputRes, invert = True)
+            preds[i, j] = Transform(p[i, j], center[i], scale[i], rotate[i], hp.outputRes, invert = True)
     return preds
     
     

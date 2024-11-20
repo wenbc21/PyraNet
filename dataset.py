@@ -5,16 +5,16 @@ from h5py import File
 import cv2
 import scipy.io
 import json
-import utils.human_prior as human_prior
+import utils.human_prior as hp
 from utils.utils import Rnd, Flip, ShuffleLR
 from utils.img import Crop, DrawGaussian, Transform
 
 class MPII(data.Dataset):
-    def __init__(self, opt, split):
+    def __init__(self, args, split):
         print('==> initializing 2D {} data.'.format(split))
         annot = {}
         tags = ['part','center','scale']
-        f = File('{}/mpii/annot/{}.h5'.format(opt.dataDir, split), 'r')
+        f = File('{}/mpii/annot/{}.h5'.format(args.dataDir, split), 'r')
         data = f['imgname']
         data = [d.decode('utf-8') for d in data]
         annot['imgname'] = np.asarray(data).copy()
@@ -25,11 +25,11 @@ class MPII(data.Dataset):
         print('Loaded 2D {} {} samples'.format(split, len(annot['scale'])))
         
         self.split = split
-        self.opt = opt
+        self.args = args
         self.annot = annot
     
     def LoadImage(self, index):
-        path = '{}/mpii/images/{}'.format(self.opt.dataDir, self.annot['imgname'][index])
+        path = '{}/mpii/images/{}'.format(self.args.dataDir, self.annot['imgname'][index])
         img = cv2.imread(path)
         return img
     
@@ -46,14 +46,14 @@ class MPII(data.Dataset):
         r = 0
         
         if self.split == 'train':
-            s = s * (2 ** Rnd(human_prior.scale))
-            r = 0 if np.random.random() < 0.6 else Rnd(human_prior.rotate)
-        inp = Crop(img, c, s, r, human_prior.inputRes) / 256.
-        out = np.zeros((human_prior.nJoints, human_prior.outputRes, human_prior.outputRes))
-        for i in range(human_prior.nJoints):
+            s = s * (2 ** Rnd(hp.scale))
+            r = 0 if np.random.random() < 0.6 else Rnd(hp.rotate)
+        inp = Crop(img, c, s, r, hp.inputRes) / 256.
+        out = np.zeros((hp.nJoints, hp.outputRes, hp.outputRes))
+        for i in range(hp.nJoints):
             if pts[i][0] > 1:
-                pt = Transform(pts[i], c, s, r, human_prior.outputRes)
-                out[i] = DrawGaussian(out[i], pt, human_prior.hmGauss) 
+                pt = Transform(pts[i], c, s, r, hp.outputRes)
+                out[i] = DrawGaussian(out[i], pt, hp.hmGauss) 
         if self.split == 'train':
             if np.random.random() < 0.5:
                 inp = Flip(inp)
@@ -72,9 +72,9 @@ class MPII(data.Dataset):
 
 
 class LSP(data.Dataset):
-    def __init__(self, opt, split):
+    def __init__(self, args, split):
         print('==> initializing 2D {} data.'.format(split))
-        with open(f'{opt.dataDir}/lsp/LEEDS_annotations.json', "r") as joints_file:
+        with open(f'{args.dataDir}/lsp/LEEDS_annotations.json', "r") as joints_file:
             data = json.load(joints_file)
         
         annot = {}
@@ -98,11 +98,11 @@ class LSP(data.Dataset):
         print('Loaded 2D {} {} samples'.format(split, len(annot['scale'])))
         
         self.split = split
-        self.opt = opt
+        self.args = args
         self.annot = annot
     
     def LoadImage(self, index):
-        path = '{}/{}'.format(self.opt.dataDir, self.annot['imgname'][index])
+        path = '{}/{}'.format(self.args.dataDir, self.annot['imgname'][index])
         img = cv2.imread(path)
         return img
     
@@ -119,14 +119,14 @@ class LSP(data.Dataset):
         r = 0
         
         if self.split == 'train':
-            s = s * (2 ** Rnd(human_prior.scale))
-            r = 0 if np.random.random() < 0.6 else Rnd(human_prior.rotate)
-        inp = Crop(img, c, s, r, human_prior.inputRes) / 256.
-        out = np.zeros((human_prior.nJoints, human_prior.outputRes, human_prior.outputRes))
-        for i in range(human_prior.nJoints):
+            s = s * (2 ** Rnd(hp.scale))
+            r = 0 if np.random.random() < 0.6 else Rnd(hp.rotate)
+        inp = Crop(img, c, s, r, hp.inputRes) / 256.
+        out = np.zeros((hp.nJoints, hp.outputRes, hp.outputRes))
+        for i in range(hp.nJoints):
             if pts[i][0] > 1:
-                pt = Transform(pts[i], c, s, r, human_prior.outputRes)
-                out[i] = DrawGaussian(out[i], pt, human_prior.hmGauss) 
+                pt = Transform(pts[i], c, s, r, hp.outputRes)
+                out[i] = DrawGaussian(out[i], pt, hp.hmGauss) 
         if self.split == 'train':
             if np.random.random() < 0.5:
                 inp = Flip(inp)

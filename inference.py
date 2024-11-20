@@ -5,18 +5,16 @@ import torch
 import torch.utils.data
 import torch.optim as optim
 import torchvision.transforms as transforms
-import utils.human_prior as human_prior
+import cv2
+import numpy as np
+from tqdm import tqdm
+import utils.human_prior as hp
 from dataset import MPII, LSP
 from model import PyramidHourglassNet
-from utils.utils import AverageMeter, Flip, ShuffleLR
-from utils.img import Crop, DrawGaussian, Transform
+from utils.utils import Flip, ShuffleLR
 from utils.eval import Accuracy, getPreds, finalPreds
 # from mmdet.apis import init_detector, inference_detector
 # from utils.detection.utils import process_mmdet_results
-from engine import train, val
-import scipy.io as sio
-import cv2
-import numpy as np
 pa = [2, 3, 7, 7, 4, 5, 8, 9, 10, 0, 12, 13, 8, 8, 14, 15]
 colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
               [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255],
@@ -35,7 +33,7 @@ def get_args_parser():
     parser.add_argument('--nFeats', type = int, default = 256, help = '# features in the hourglass')
     parser.add_argument('--nStack', type = int, default = 2, help = '# hourglasses to stack')
     parser.add_argument('--nModules', type = int, default = 2, help = '# residual modules at each hourglass')
-    parser.add_argument('--numOutput', type = int, default = human_prior.nJoints, help = '# ouput')
+    parser.add_argument('--numOutput', type = int, default = hp.nJoints, help = '# output joint number')
 
     return parser
 
@@ -49,7 +47,7 @@ def main(args):
         print("You have to use pretrained model! ")
         exit()
     
-    checkpoint = torch.load(args.loadModel)
+    checkpoint = torch.load(args.loadModel, weights_only=False)
     model.load_state_dict(checkpoint['model'])
     model.eval()
     
@@ -65,7 +63,7 @@ def main(args):
     
     image_path = [item.path for item in os.scandir(img_dir) if item.is_file()]
     
-    for img_i in range(len(image_path)) :
+    for img_i in tqdm(range(len(image_path))) :
         
         img_path = image_path[img_i]
         save_path = os.path.join(res_dir, os.path.split(img_path)[-1])
@@ -130,9 +128,9 @@ def main(args):
         
         input_ = padded_image.cpu().numpy()
         input_[0] = Flip(input_[0]).copy()
-        inputFlip_var = torch.autograd.Variable(torch.from_numpy(input_).view(1, input_.shape[1], human_prior.inputRes, human_prior.inputRes)).float().cuda()
+        inputFlip_var = torch.autograd.Variable(torch.from_numpy(input_).view(1, input_.shape[1], hp.inputRes, hp.inputRes)).float().cuda()
         outputFlip = model(inputFlip_var)
-        outputFlip = ShuffleLR(Flip((outputFlip[args.nStack - 1].data).cpu().numpy()[0])).reshape(1, human_prior.nJoints, human_prior.outputRes, human_prior.outputRes)
+        outputFlip = ShuffleLR(Flip((outputFlip[args.nStack - 1].data).cpu().numpy()[0])).reshape(1, hp.nJoints, hp.outputRes, hp.outputRes)
         output_ = ((output[args.nStack - 1].data).cpu().numpy() + outputFlip) / 2
         
         hm = (output[args.nStack - 1].data).cpu().numpy()

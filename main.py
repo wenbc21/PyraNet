@@ -4,7 +4,7 @@ import argparse
 import torch
 import torch.utils.data
 import torch.optim as optim
-import utils.human_prior as human_prior
+import utils.human_prior as hp
 from dataset import MPII, LSP
 from model import PyramidHourglassNet
 from engine import train, val
@@ -25,7 +25,7 @@ def get_args_parser():
     parser.add_argument('--nFeats', type = int, default = 256, help = '# features in the hourglass')
     parser.add_argument('--nStack', type = int, default = 2, help = '# hourglasses to stack')
     parser.add_argument('--nModules', type = int, default = 2, help = '# residual modules at each hourglass')
-    parser.add_argument('--numOutput', type = int, default = human_prior.nJoints, help = '# ouput')
+    parser.add_argument('--numOutput', type = int, default = hp.nJoints, help = '# output joint number')
     
     # training
     parser.add_argument('--LR', type = float, default = 7e-4, help = 'Learning Rate')
@@ -79,7 +79,7 @@ def main(args):
     
     start_epoch = 1
     if args.loadModel != 'none':
-        checkpoint = torch.load(args.loadModel)
+        checkpoint = torch.load(args.loadModel, weights_only=False)
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         start_epoch = checkpoint['epoch'] + 1
