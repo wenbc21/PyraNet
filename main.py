@@ -36,7 +36,6 @@ def get_args_parser():
     parser.add_argument('--epochs', type = int, default = 200, help = '#training epochs')
     parser.add_argument('--val_intervals', type = int, default = 20, help = '#valid intervel')
     parser.add_argument('--batchsize', type = int, default = 24, help = 'Mini-batch size')
-    parser.add_argument('--arch', default = 'hg', help = 'hg | hg-reg | resnet-xxx')
     parser.add_argument('--num_workers', type=int, default=4)
 
     return parser
