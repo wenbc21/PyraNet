@@ -6,7 +6,7 @@ import torch.utils.data
 import torch.optim as optim
 import utils.human_prior as hp
 from dataset import MPII, LSP
-from model import PyramidHourglassNet
+from model import PyraNet
 from engine import train, val
 import scipy.io as sio
 
@@ -62,7 +62,7 @@ def main(args):
         num_workers = args.num_workers
     )
     
-    model = PyramidHourglassNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
+    model = PyraNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
     optimizer = torch.optim.RMSprop(
         model.parameters(), 
         lr=args.LR, 

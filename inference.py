@@ -69,7 +69,7 @@ def main(args):
     
     image_path = [item.path for item in os.scandir(img_dir) if item.is_file()]
     
-    for img_i in tqdm(range(len(image_path))) :
+    for img_i in tqdm(range(len(image_path)), desc="Inference for video frames...") :
         
         img_path = image_path[img_i]
         save_path = os.path.join(res_dir, os.path.split(img_path)[-1])

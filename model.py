@@ -2,102 +2,106 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
-
-class Concat(nn.Module):
-    # for PRM-C
-    def __init__(self):
-        super(Concat,self).__init__()
-    
-    def forward(self, input):
-        return torch.cat(input,1)
-
-class DownSample(nn.Module):
-    def __init__(self,scale):
-        super(DownSample, self).__init__()
-        self.scale = scale
-
-    def forward(self, x):
-        sample = F.interpolate(x,scale_factor=self.scale)
-        return sample
-
-class BnResidualConv1(nn.Module):
-    def __init__(self,in_channels,out_channels):
-        super(BnResidualConv1,self).__init__()
-        self.in_channels = int(in_channels)
-        self.out_channels = int(out_channels)
+class BnReluConv1(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(BnReluConv1, self).__init__()
 
         self.bn = nn.BatchNorm2d(in_channels)
-        self.conv = nn.Conv2d(self.in_channels,self.out_channels,kernel_size=1,padding=0)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
 
     def forward(self, x):
         x = self.bn(x)
-        return self.conv(F.relu(x))
+        x = F.relu(x)
+        x = self.conv(x)
+        return x
 
-class BnResidualConv3(nn.Module):
-    def __init__(self,in_channels,out_channels):
-        super(BnResidualConv3,self).__init__()
-        self.in_channels = int(in_channels)
-        self.out_channels = int(out_channels)
+class BnReluConv3(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(BnReluConv3, self).__init__()
 
-        self.bn = nn.BatchNorm2d(self.in_channels)
-        self.conv = nn.Conv2d(self.in_channels,self.out_channels,kernel_size=3,padding=1)
+        self.bn = nn.BatchNorm2d(in_channels)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
 
     def forward(self, x):
         x = self.bn(x)
-        return self.conv(F.relu(x))
+        x = F.relu(x)
+        x = self.conv(x)
+        return x
+
+class BnReluDilatedConv3(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(BnReluDilatedConv3,self).__init__()
+
+        self.bn = nn.BatchNorm2d(in_channels)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=2, dilation=2)
+
+    def forward(self, x):
+        x = self.bn(x)
+        x = F.relu(x)
+        x = self.conv(x)
+        return x
 
 class PRM(nn.Module):
-    def __init__(self,in_channels,out_channels):
-        super(PRM,self).__init__()
+    def __init__(self, in_channels, out_channels):
+        super(PRM, self).__init__()
         self.in_channels = int(in_channels)
         self.out_channels = int(out_channels)
-        self.reo1 = BnResidualConv1(in_channels=self.in_channels,out_channels=int(self.out_channels/2))
-        # When choose PRM-A，uncomment reo2-reo4
-        self.reo2 = BnResidualConv1(in_channels=self.in_channels,out_channels=int(self.out_channels/2))
-        self.reo3 = BnResidualConv1(in_channels=self.in_channels,out_channels=int(self.out_channels/2))
-        self.reo4 = BnResidualConv1(in_channels=self.in_channels,out_channels=int(self.out_channels/2))
-        self.reo5 = BnResidualConv1(in_channels=self.in_channels,out_channels=int(self.out_channels))
+        self.out_channels_half = int(self.out_channels / 2)
+        self.reo1 = BnReluConv1(in_channels=self.in_channels, out_channels=self.out_channels_half)              # for PRM-B, C, D
+        self.reo2 = BnReluConv1(in_channels=self.in_channels, out_channels=self.out_channels_half)              # for PRM-A
+        self.reo3 = BnReluConv1(in_channels=self.in_channels, out_channels=self.out_channels_half)              # for PRM-A
+        self.reo4 = BnReluConv1(in_channels=self.in_channels, out_channels=self.out_channels_half)              # for PRM-A
+        self.reo5 = BnReluConv1(in_channels=self.in_channels, out_channels=self.out_channels)                   # identity branch
 
-        # downsample to multi-scale
-        self.down1 = DownSample(scale=pow(2,-1))      
-        self.down2 = DownSample(scale=pow(2,-0.75))
-        self.down3 = DownSample(scale=pow(2,-0.5))
-        self.down4 = DownSample(scale=pow(2,-0.25))
+        self.ret1 = BnReluConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)             # for PRM-A, B, C
+        self.ret2 = BnReluConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)             # for PRM-A, B, C
+        self.ret3 = BnReluConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)             # for PRM-A, B, C
+        self.ret4 = BnReluConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)             # for PRM-A, B, C
+        # self.ret1 = BnReluDilatedConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)    # for PRM-D
+        # self.ret2 = BnReluDilatedConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)    # for PRM-D
+        # self.ret3 = BnReluDilatedConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)    # for PRM-D
+        # self.ret4 = BnReluDilatedConv3(in_channels=self.out_channels_half, out_channels=self.out_channels)    # for PRM-D
 
-        self.ret1 = BnResidualConv3(in_channels=int(self.out_channels/2),out_channels=self.out_channels)
-        self.ret2 = BnResidualConv3(in_channels=int(self.out_channels/2),out_channels=self.out_channels)
-        self.ret3 = BnResidualConv3(in_channels=int(self.out_channels/2),out_channels=self.out_channels)
-        self.ret4 = BnResidualConv3(in_channels=int(self.out_channels/2),out_channels=self.out_channels)
-        # PRM-B
-        self.smooth = BnResidualConv1(in_channels=self.out_channels,out_channels=self.out_channels)
-        # PRM-C
-        # self.smooth = BnResidualConv1(in_channels=self.out_channels*4,out_channels=self.out_channels)
+        self.smooth = BnReluConv1(in_channels=self.out_channels, out_channels=self.out_channels)                # for PRM-A, B, D
+        # self.smooth = BnReluConv1(in_channels=self.out_channels*4, out_channels=self.out_channels)            # for PRM-C
 
     def forward(self, x):
         identity = self.reo5(x)
-        size = identity.size()[-2],identity.size()[-1]
-        # multi-scale information
-        # BN + relu + 1x1 conv
-        scale1 = self.reo1(x)
-        # scale2 = self.reo2(x)
-        # scale3 = self.reo3(x)
-        scale2 = self.reo1(x)
-        scale3 = self.reo1(x)
-        scale4 = self.reo1(x)
+        size = identity.size()[-2], identity.size()[-1]
 
-        ratio1 = F.interpolate(self.ret1(self.down1(scale1)),size=size)
-        ratio2 = F.interpolate(self.ret2(self.down2(scale2)),size=size)
-        ratio3 = F.interpolate(self.ret3(self.down3(scale3)),size=size)
-        ratio4 = F.interpolate(self.ret4(self.down4(scale4)),size=size)
-        # PRM-B
-        tmp_ret = ratio1+ratio2+ratio3+ratio4
-        # PRM-C,replace smooth with PRM-C's smooth layer
-        # tmp_ret = torch.cat((ratio1,ratio2,ratio3,ratio4),1)
-        smooth = self.smooth(tmp_ret)
-        ret = identity + smooth
-        # size equal
-        return ret
-        #return identity+ratio1+ratio2+ratio3
+        # multi-scale information
+        # scale1 = self.reo1(x)     # for PRM-A
+        # scale2 = self.reo2(x)     # for PRM-A
+        # scale3 = self.reo3(x)     # for PRM-A
+        # scale4 = self.reo4(x)     # for PRM-A
+        scale1 = self.reo1(x)       # for PRM-B, C, D
+        scale2 = self.reo1(x)       # for PRM-B, C, D
+        scale3 = self.reo1(x)       # for PRM-B, C, D
+        scale4 = self.reo1(x)       # for PRM-B, C, D
+        
+        # downsample to multi-scale, scale = pow(2, -M*c/C), where M=1, C=4, c~[0, C]
+        ratio1 = F.interpolate(scale1, scale_factor=pow(2, -1))
+        ratio2 = F.interpolate(scale2, scale_factor=pow(2, -0.75))
+        ratio3 = F.interpolate(scale3, scale_factor=pow(2, -0.5))
+        ratio4 = F.interpolate(scale4, scale_factor=pow(2, -0.25))
+
+        # bottle neck convolution
+        pyramid1 = F.interpolate(self.ret1(ratio1), size=size)                          # for PRM-A, B, C
+        pyramid2 = F.interpolate(self.ret2(ratio2), size=size)                          # for PRM-A, B, C
+        pyramid3 = F.interpolate(self.ret3(ratio3), size=size)                          # for PRM-A, B, C
+        pyramid4 = F.interpolate(self.ret4(ratio4), size=size)                          # for PRM-A, B, C
+        # pyramid1 = self.ret1(scale1)                                                  # for PRM-D
+        # pyramid2 = self.ret2(scale2)                                                  # for PRM-D
+        # pyramid3 = self.ret3(scale3)                                                  # for PRM-D
+        # pyramid4 = self.ret4(scale4)                                                  # for PRM-D
+        
+        # combine the feature from pyramid
+        pyramid_combined = pyramid1 + pyramid2 + pyramid3 + pyramid4                    # for PRM-A, B, D
+        # pyramid_combined = torch.cat((pyramid1, pyramid2, pyramid3, pyramid4), 1)     # for PRM-C
+        
+        # combine the residule part
+        smooth = self.smooth(pyramid_combined)
+        return identity + smooth
 
 
 class Hourglass(nn.Module):
@@ -151,27 +155,27 @@ class Hourglass(nn.Module):
         
         return up1 + up2
 
-class PyramidHourglassNet(nn.Module):
+class PyraNet(nn.Module):
     def __init__(self, nStack, nModules, nFeats, numOutput):
-        super(PyramidHourglassNet, self).__init__()
+        super(PyraNet, self).__init__()
         self.nStack = nStack
         self.nModules = nModules
         self.nFeats = nFeats
         self.numOutput = numOutput
 
-        # add a pyramid structure
-        self.conv1 = nn.Conv2d(3,64,kernel_size=1,stride=2)
-        self.prm1 = PRM(64,64)
-        self.ipool = nn.MaxPool2d(kernel_size=2,stride=2)
-        self.prm2 = PRM(64,self.nFeats)
+        # pyramid hourglass structure
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=1, stride=2)
+        self.prm1 = PRM(64, 64)
+        self.ipool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.prm2 = PRM(64, self.nFeats)
         self.relu = nn.ReLU(inplace=True)
 
-        # stacked hourglass
-        self.relu = nn.ReLU(inplace = True)
-        self.r1 = PRM(64,128)
-        # self.maxpool = nn.MaxPool2d(kernel_size = 2, stride = 2)
-        self.r4 = PRM(128,128)
-        self.r5 = PRM(128,self.nFeats)
+        # stacked hourglass                                             # will be removed
+        self.relu = nn.ReLU(inplace = True)                             # will be removed
+        self.r1 = PRM(64, 128)                                          # will be removed
+        # self.maxpool = nn.MaxPool2d(kernel_size = 2, stride = 2)      # will be removed
+        self.r4 = PRM(128, 128)                                         # will be removed
+        self.r5 = PRM(128, self.nFeats)                                 # will be removed
 
         _hourglass, _Residual, _lin_, _tmpOut, _ll_, _tmpOut_, _reg_ = [], [], [], [], [], [], []
         for i in range(self.nStack):
@@ -192,7 +196,6 @@ class PyramidHourglassNet(nn.Module):
         self.tmpOut = nn.ModuleList(_tmpOut)
         self.ll_ = nn.ModuleList(_ll_)
         self.tmpOut_ = nn.ModuleList(_tmpOut_)
-        # self.upout = nn.Upsample(scale_factor=2)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -209,7 +212,6 @@ class PyramidHourglassNet(nn.Module):
                 ll = self.Residual[i * self.nModules + j](ll)
             ll = self.lin_[i](ll)
             tmpOut = self.tmpOut[i](ll)
-            # tmpOut = F.upsample(tmpOut,scale_factor=2)
             out.append(tmpOut)
             if i < self.nStack - 1:
                 ll_ = self.ll_[i](ll)
