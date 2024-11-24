@@ -80,7 +80,7 @@ def main(args):
     if args.loadModel != 'none':
         checkpoint = torch.load(args.loadModel, weights_only=False)
         model.load_state_dict(checkpoint['model'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
+        # optimizer.load_state_dict(checkpoint['optimizer'])
         start_epoch = checkpoint['epoch'] + 1
 
     for epoch in range(start_epoch, args.epochs + 1):

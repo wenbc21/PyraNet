@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 import utils.human_prior as hp
 from dataset import MPII, LSP
-from model import PyramidHourglassNet
+from model import PyraNet
 from utils.utils import Flip, ShuffleLR
 from utils.eval import Accuracy, getPreds, finalPreds
 from mmdet.apis import init_detector, inference_detector
@@ -45,7 +45,7 @@ def get_args_parser():
 
 def main(args):
     
-    model = PyramidHourglassNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
+    model = PyraNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
     model = model.cuda()
     
     if args.loadModel == 'none':

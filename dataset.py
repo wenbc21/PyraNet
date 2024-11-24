@@ -11,7 +11,7 @@ from utils.img import Crop, DrawGaussian, Transform
 
 class MPII(data.Dataset):
     def __init__(self, args, split):
-        print('==> initializing 2D {} data.'.format(split))
+        print('Loading MPII {} data...'.format(split))
         annot = {}
         tags = ['part','center','scale']
         f = File('{}/mpii/annot/{}.h5'.format(args.dataDir, split), 'r')
@@ -22,7 +22,7 @@ class MPII(data.Dataset):
             annot[tag] = np.asarray(f[tag]).copy()
         f.close()
 
-        print('Loaded 2D {} {} samples'.format(split, len(annot['scale'])))
+        print('{} data with {} samples loaded'.format(split, len(annot['scale'])))
         
         self.split = split
         self.args = args
@@ -73,7 +73,7 @@ class MPII(data.Dataset):
 
 class LSP(data.Dataset):
     def __init__(self, args, split):
-        print('==> initializing 2D {} data.'.format(split))
+        print('Loading LSP {} data...'.format(split))
         with open(f'{args.dataDir}/lsp/LEEDS_annotations.json', "r") as joints_file:
             data = json.load(joints_file)
         
@@ -95,7 +95,7 @@ class LSP(data.Dataset):
         annot['center'] = np.asarray(center).copy()
         annot['scale'] = np.asarray(scale).copy()
 
-        print('Loaded 2D {} {} samples'.format(split, len(annot['scale'])))
+        print('{} data with {} samples loaded'.format(split, len(annot['scale'])))
         
         self.split = split
         self.args = args
