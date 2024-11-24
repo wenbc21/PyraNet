@@ -3,16 +3,12 @@ import argparse
 
 import torch
 import torch.utils.data
-import torch.optim as optim
-import torchvision.transforms as transforms
 import cv2
 import numpy as np
 from tqdm import tqdm
 import utils.human_prior as hp
-from dataset import MPII, LSP
-from model import PyramidHourglassNet
+from model import PyraNet
 from utils.utils import Flip, ShuffleLR
-from utils.eval import Accuracy, getPreds, finalPreds
 pa = [2, 3, 7, 7, 4, 5, 8, 9, 10, 0, 12, 13, 8, 8, 14, 15]
 colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
               [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255],
@@ -38,7 +34,7 @@ def get_args_parser():
 
 def main(args):
     
-    model = PyramidHourglassNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
+    model = PyraNet(args.nStack, args.nModules, args.nFeats, args.numOutput)
     model = model.cuda()
     
     if args.loadModel == 'none':

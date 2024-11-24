@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.nn.functional as F
-import math
 
 class BnReluConv1(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -175,20 +174,21 @@ class PyraNet(nn.Module):
         x = self.ipool(x)
         x = self.prm2(x)
         
-        out = []
+        outputs = []
         
         for i in range(self.nStack):
-            hg = self.hourglass[i](x)
-            ll = hg
+            residual_out = self.hourglass[i](x)
             for j in range(self.nModules):
-                ll = self.Residual[i * self.nModules + j](ll)
-            ll = self.lin_[i](ll)
-            tmpOut = self.tmpOut[i](ll)
-            out.append(tmpOut)
+                residual_out = self.Residual[i * self.nModules + j](residual_out)
+
+            residual_out = self.lin_[i](residual_out)
+            tmpOut = self.tmpOut[i](residual_out)
+            outputs.append(tmpOut)
+            
             if i < self.nStack - 1:
-                ll_ = self.ll_[i](ll)
+                ll_out = self.ll_[i](residual_out)
                 tmpOut_ = self.tmpOut_[i](tmpOut)
-                x = x + ll_ + tmpOut_
+                x = x + ll_out + tmpOut_
 
-        return out
-
+        return outputs
+        

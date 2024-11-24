@@ -1,8 +1,6 @@
 import torch
-import numpy as np
 from utils.utils import AverageMeter, Flip, ShuffleLR
 from utils.eval import Accuracy, getPreds, finalPreds
-import cv2
 import utils.human_prior as hp
 import sys
 from tqdm import tqdm
