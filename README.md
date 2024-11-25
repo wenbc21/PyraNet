@@ -1,71 +1,62 @@
-# Pytorch-PyraNet
+# PyraNet
 
 ## Introduction
-This is a pytorch version reproduce code of 'Learning Feature Pyramids for Human Pose Estimation', ICCV 2017. Link of paper: https://arxiv.org/pdf/1708.01101.pdf.
+This is a reimplement of paper 'Learning Feature Pyramids for Human Pose Estimation', ICCV 2017. Thanks for the authors of paper.
 
-## The network
-The network designed based on stacked hourglass network. 
+Paper link: https://arxiv.org/pdf/1708.01101.pdf
 
-Pyranet replace the Residual module with Pyramid Residual module.
+## Methods
+PyraNet replace the Residual module in Stacked Hourglass Network with Pyramid Residual Module, in order to capture multi-scale features.
 
-The authors design a Pyramid Residual module to use features and information of multi-scale
-
-In this repo, PRM-A, PRM-B and PRM-C has been realized. Following the comment you can choose these three Pyramid Residual Module. 
-See the definition of Pyramid Residual Module and the network architecture in [model.py](model.py).
+PRM-A, PRM-B, PRM-C and PRM-D can be selected by commenting and un-commenting corresponding lines in [model.py](model.py)
 
 ## Requirements
-The code has been tested with Ubuntu 20.04 and CUDA 11.8.
+The code has been tested under Ubuntu 20.04 and CUDA 11.8.
 The training process was conducted on one NVIDIA GeForce RTX 3090.
 
-## Datasets
-Mpii human pose dataset and LSP human pose dataset.
-
+If you need to inference a demo with human detection (highly recommend), you need to install mmcv and mmdet.
+You can also inference without detection by running [inference_nodet.py](inference_nodet.py)
 
 ## Demo
-You may download the weights from the link to do some inference on our demo images
+You may download the weights from the link to do some inference on our demo images.
 ```
-https://drive.google.com/file/d/17qRIv1Ryx0WJxKyzvF3h_xTlhrFJRG_Q/view?usp=sharing
+https://drive.google.com/file/d/1pgvWvol9yJNcOh_e4eDcqyAoQuurgP5y/view?usp=sharing
 ```
-Run
+Assume you have a series of images to be inferred, you can put them in demo/kunkun/images, and run
 ```
-python inference.py --loadModel exp/mpii/model_200.pth
+CUDA_VISIBLE_DEVICES = 0 python inference.py --loadModel exp/mpii/model_200.pth --dataDir demo/kunkun
 ```
 
-## Evaluate
-You may evaluate our predictions from MPII and LSP dataset by running
+## Train
+You should follow [README](data/README.md) to download dataset and organize them. Then you can train PyraNet by running
 ```
-python tools/eval_PCK.py exp/lsp/preds_200.mat
+CUDA_VISIBLE_DEVICES = 0 python main.py -epochs 200
 ```
-on LSP dataset, and
+
+## Evaluation
+If you have the mat file produced during the training process, you can evaluate PCK and PCKh by running [eval_PCK](tools/eval_PCK.py) and [eval_PCKh](tools/eval_PCKh.py), for example
 ```
 python tools/eval_PCKh.py exp/mpii/preds_200.mat
 ```
-on MPII dataset.
+or
+```
+python tools/eval_PCK.py exp/lsp/preds_200.mat
+```
 
-You can get a result like that :
+The results are like:
 ```
 Head,   Shoulder, Elbow,  Wrist,   Hip,     Knee,    Ankle,  Mean
-95.02   93.07     85.00   78.79    83.94    79.47    75.60   84.56
+96.73   95.87     90.06   85.15    92.45    86.46    82.71   90.04
 ```
 
 ## Visualize
-You need to download the dataset first for visualization and training. Please follow [README](data/README.md) to do so.
-After downloading the dataset, you may run 
-```
-python tools/visualize.py exp/lsp/preds_200.mat
-```
-for LSP visualization, and
+If you have the mat file produced during the training process, you can visualize the result files by running [visualize](tools/visualize.py)
 ```
 python tools/visualize.py exp/mpii/preds_200.mat
 ```
-for MPII visualization.
-
-
-## Train
-For example, if you train the PRM network with 300 epochs, batch 6 and 2 stacked hourglass module with one gpu:
+for MPII visualization, and
 ```
-CUDA_VISIBLE_DEVICES = 0 python main.py -nEpochs 300 -trainBatch 6 -nStack 2
+python tools/visualize.py exp/lsp/preds_200.mat
 ```
-
-## Acknowledgement
-Thanks for the authors of 'Learning Feature Pyramids for Human Pose Estimation'.
+for LSP visualization. 
+Remember to comment and uncomment corresponding lines in the file.
