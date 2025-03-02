@@ -3,7 +3,20 @@
 ## Introduction
 This is a reimplement of paper 'Learning Feature Pyramids for Human Pose Estimation', ICCV 2017. Thanks for the authors of paper.
 
-Paper link: https://arxiv.org/pdf/1708.01101.pdf
+Paper link: [https://arxiv.org/abs/1708.01101](https://arxiv.org/abs/1708.01101)
+
+<div style="display: flex; justify-content: space-between;">
+  <img src="demo/aios/images/000615.jpg" style="width: 24%; height: auto;">
+  <img src="demo/kunkun/images/000715.jpg" style="width: 24%; height: auto;">
+  <img src="demo/lalaland/images/000031.jpg" style="width: 24%; height: auto;">
+  <img src="demo/masterma/images/003955.jpg" style="width: 24%; height: auto;">
+</div>
+<div style="display: flex; justify-content: space-between;">
+  <img src="demo/aios/results/000615.jpg" style="width: 24%; height: auto;">
+  <img src="demo/kunkun/results/000715.jpg" style="width: 24%; height: auto;">
+  <img src="demo/lalaland/results/000031.jpg" style="width: 24%; height: auto;">
+  <img src="demo/masterma/results/003955.jpg" style="width: 24%; height: auto;">
+</div>
 
 ## Methods
 PyraNet replace the Residual module in Stacked Hourglass Network with Pyramid Residual Module, in order to capture multi-scale features.
